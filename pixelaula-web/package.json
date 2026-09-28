@@ -1,0 +1,16 @@
+{
+  "name": "pixelaula-platform",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": ["web", "server"],
+  "scripts": {
+    "dev": "concurrently -n WEB,API -c cyan,magenta \"npm run dev -w web\" \"npm run dev -w server\"",
+    "dev:web": "npm run dev -w web",
+    "dev:server": "npm run dev -w server",
+    "build": "npm run build -w web && npm run build -w server",
+    "typecheck": "npm run typecheck -w web && npm run typecheck -w server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

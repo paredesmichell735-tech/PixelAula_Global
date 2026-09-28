@@ -1,0 +1,287 @@
+### =====================================================================
+### RPG Code Academy · ejemplos de todos los endpoints
+### Abre este archivo con la extensión REST Client de VS Code y pulsa
+### "Send Request" sobre cada bloque.
+### =====================================================================
+
+@host = http://localhost:3000/api/v1
+@supabase = https://TU-PROYECTO.supabase.co
+@anonKey = TU_ANON_KEY
+
+### 0 · Login contra Supabase Auth (esto lo hace el cliente, no el backend).
+### Copia el access_token de la respuesta en la variable @token de abajo.
+# @name login
+POST {{supabase}}/auth/v1/token?grant_type=password
+apikey: {{anonKey}}
+Content-Type: application/json
+
+{
+  "email": "jugador@ejemplo.com",
+  "password": "contrasena-de-prueba"
+}
+
+@token = {{login.response.body.access_token}}
+
+### 1 · Salud (pública)
+GET {{host}}/health
+
+### 2 · Manifiesto de sprites (pública)
+GET {{host}}/assets/manifest
+
+### 3 · Mi perfil
+GET {{host}}/me
+Authorization: Bearer {{token}}
+
+### 4 · Cambiar username y avatar
+PATCH {{host}}/me
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "username": "frisk_dev",
+  "avatar_key": "avatar_02"
+}
+
+### 5 · Crear personaje (una sola vez; desbloquea el primer nivel)
+POST {{host}}/characters
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Frisk",
+  "class": "coder"
+}
+
+### 6 · Stats del personaje
+GET {{host}}/characters/me
+Authorization: Bearer {{token}}
+
+### 7 · Mapa completo (una llamada pinta todo)
+# @name map
+GET {{host}}/map
+Authorization: Bearer {{token}}
+
+@levelId = {{map.response.body.data.worlds[0].chapters[0].levels[0].id}}
+
+### 8 · Detalle del nivel
+GET {{host}}/levels/{{levelId}}
+Authorization: Bearer {{token}}
+
+### 9 · Lección (la genera la IA la primera vez)
+GET {{host}}/levels/{{levelId}}/lesson
+Authorization: Bearer {{token}}
+
+### 10 · Iniciar combate
+# @name session
+POST {{host}}/levels/{{levelId}}/sessions
+Authorization: Bearer {{token}}
+
+@sessionId = {{session.response.body.data.session.id}}
+
+### 11 · Estado de la partida (reanudar)
+GET {{host}}/sessions/{{sessionId}}
+Authorization: Bearer {{token}}
+
+### 12 · Ejercicio actual (sin respuesta correcta)
+GET {{host}}/sessions/{{sessionId}}/current
+Authorization: Bearer {{token}}
+
+### 13 · Pedir pista (escalonada, penaliza puntaje)
+POST {{host}}/sessions/{{sessionId}}/hint
+Authorization: Bearer {{token}}
+
+### 14 · Responder · opción múltiple
+# client_attempt_id lo genera el cliente: hace la petición idempotente.
+# @name answer
+POST {{host}}/sessions/{{sessionId}}/answer
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "client_attempt_id": "8f1f2b0e-6d3a-4c2e-9a51-3f8a1d2b7c40",
+  "answer": "b",
+  "time_spent_ms": 4200
+}
+
+@attemptId = {{answer.response.body.data.attempt_id}}
+
+### 15 · Responder · rellenar hueco
+POST {{host}}/sessions/{{sessionId}}/answer
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "client_attempt_id": "1b2c3d4e-5f60-4a7b-8c9d-0e1f2a3b4c5d",
+  "answer": "let"
+}
+
+### 16 · Responder · código (lo califica la IA contra la rúbrica)
+POST {{host}}/sessions/{{sessionId}}/answer
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "client_attempt_id": "2c3d4e5f-6071-4b8c-9d0e-1f2a3b4c5d6e",
+  "answer": "function crearHeroe(nombre) {\n  return { nombre, hp: 100 };\n}",
+  "time_spent_ms": 61000
+}
+
+### 17 · Reenviar la MISMA respuesta (idempotencia): no penaliza dos veces
+POST {{host}}/sessions/{{sessionId}}/answer
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "client_attempt_id": "8f1f2b0e-6d3a-4c2e-9a51-3f8a1d2b7c40",
+  "answer": "b"
+}
+
+### 18 · Explicación paso a paso del fallo
+POST {{host}}/attempts/{{attemptId}}/explain
+Authorization: Bearer {{token}}
+
+### 19 · Saltar ejercicio (consume una Ficha de Salto)
+POST {{host}}/sessions/{{sessionId}}/skip
+Authorization: Bearer {{token}}
+
+### 20 · Abandonar la partida
+POST {{host}}/sessions/{{sessionId}}/abandon
+Authorization: Bearer {{token}}
+
+### 21 · Tienda
+# @name items
+GET {{host}}/items
+Authorization: Bearer {{token}}
+
+@itemId = {{items.response.body.data[0].id}}
+
+### 22 · Comprar
+POST {{host}}/shop/purchase
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "item_id": "{{itemId}}",
+  "quantity": 1
+}
+
+### 23 · Inventario
+# @name inventory
+GET {{host}}/inventory
+Authorization: Bearer {{token}}
+
+@inventoryId = {{inventory.response.body.data[0].inventory_id}}
+
+### 24 · Usar una poción dentro del combate
+POST {{host}}/inventory/{{inventoryId}}/use
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "session_id": "{{sessionId}}"
+}
+
+### 25 · Logros
+GET {{host}}/achievements
+Authorization: Bearer {{token}}
+
+### 26 · Racha
+GET {{host}}/streak
+Authorization: Bearer {{token}}
+
+### 27 · Reclamar recompensa diaria
+POST {{host}}/streak/claim
+Authorization: Bearer {{token}}
+
+### 28 · Leaderboard global histórico
+GET {{host}}/leaderboard?scope=global&period=all&limit=20
+Authorization: Bearer {{token}}
+
+### 29 · Leaderboard de amigos, esta semana
+GET {{host}}/leaderboard?scope=friends&period=week
+Authorization: Bearer {{token}}
+
+### =====================================================================
+### Admin (requiere profiles.is_admin = true)
+### =====================================================================
+
+### 30 · Regenerar contenido de un nivel
+POST {{host}}/admin/levels/{{levelId}}/generate
+Authorization: Bearer {{token}}
+
+### 31 · Generar narrativa del nivel
+POST {{host}}/admin/levels/{{levelId}}/narrative
+Authorization: Bearer {{token}}
+
+### 32 · Crear mundo
+POST {{host}}/admin/worlds
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "slug": "cuevas-de-la-recursion",
+  "name": "Cuevas de la Recursión",
+  "narrative_theme": "Cuevas que se repiten dentro de sí mismas hasta el caso base.",
+  "order_index": 2,
+  "sprite_key": "world_caves",
+  "color_palette": { "bg": "#0d0f1a", "accent": "#73eff7" }
+}
+
+### 33 · Crear capítulo
+POST {{host}}/admin/chapters
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "world_id": "PEGA_UN_WORLD_ID",
+  "slug": "caso-base",
+  "name": "El Caso Base",
+  "order_index": 1,
+  "base_difficulty": 8
+}
+
+### 34 · Crear nivel
+POST {{host}}/admin/levels
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "chapter_id": "PEGA_UN_CHAPTER_ID",
+  "slug": "factorial",
+  "name": "Factorial",
+  "order_index": 1,
+  "type": "combat",
+  "difficulty": 8,
+  "concepts": ["recursion"],
+  "xp_reward": 120,
+  "coins_reward": 30,
+  "exercise_count": 5,
+  "enemy_name": "Eco Infinito",
+  "enemy_sprite_key": "enemy_echo",
+  "enemy_hp": 160,
+  "enemy_damage": 28
+}
+
+### 35 · Gasto de IA de los últimos 30 días
+GET {{host}}/admin/ai-costs
+Authorization: Bearer {{token}}
+
+### =====================================================================
+### Errores que conviene probar
+### =====================================================================
+
+### Sin token → 401 UNAUTHORIZED
+GET {{host}}/me
+
+### Nivel bloqueado → 403 LEVEL_LOCKED
+POST {{host}}/levels/00000000-0000-0000-0000-000000000000/sessions
+Authorization: Bearer {{token}}
+
+### Body inválido → 422 VALIDATION_ERROR
+POST {{host}}/sessions/{{sessionId}}/answer
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "answer": "b"
+}

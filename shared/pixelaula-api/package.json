@@ -1,0 +1,40 @@
+{
+  "name": "@pixelaula/api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Contrato compartido de la API de PixelAula: tipos, endpoints y cliente para web y movil.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./schemas": {
+      "types": "./dist/schemas.d.ts",
+      "import": "./dist/schemas.js"
+    }
+  },
+  "peerDependencies": {
+    "zod": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "zod": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "zod": "^4.6.5"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "prepare": "tsc -p tsconfig.build.json"
+  }
+}

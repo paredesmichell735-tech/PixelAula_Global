@@ -1,0 +1,8 @@
+# Supabase
+.branches
+.temp
+
+# Claves locales que genera la CLI
+.env.keys
+.env.local
+.env.*.local
